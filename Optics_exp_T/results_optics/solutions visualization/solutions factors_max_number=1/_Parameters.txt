@@ -1,0 +1,6 @@
+pop_size = 4
+
+max_deriv_order=(2,)
+equation_terms_max_number=5
+data_fun_pow=1
+equation_factors_max_number=1                           

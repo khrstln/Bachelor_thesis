@@ -1,0 +1,8 @@
+%% Parameters of the system
+wl = 0.5; %wavelength in micrometers
+dl = 15; % period of the structure in micrometers 2
+dh = 50; % layer thickness in micrometers 
+epss = 2; % dielectric permittivity of cylinders 
+epsm = 1; %  dielectric permittivity of background media
+r0_fix = 1.0; % radius of cylinders
+n0 = 0.3; %packing density of cylinders
