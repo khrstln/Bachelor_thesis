@@ -1,6 +1,7 @@
 import epde.interface.interface as epde_alg
 import numpy as np
 from epde.interface.prepared_tokens import GridTokens, CacheStoredTokens
+from epde.interface.interface import EpdeSearch
 
 
 def set_de_params(epde_search_obj: epde_alg.EpdeSearch, pop_size: int, training_epochs: int):
@@ -45,7 +46,7 @@ def epde_discovery(grid: np.ndarray, poynting_vec: np.ndarray, pop_size: int = 5
                    factors_max_number: int = 1, poly_order: int = 4, training_epochs: int = 100,
                    variable_names: [str] = None, max_deriv_order: tuple = (2,),
                    equation_terms_max_number: int = 5, data_fun_pow: int = 1,
-                   use_ann: bool = False, derivs: [[np.ndarray]] = None):
+                   use_ann: bool = False, derivs: [[np.ndarray]] = None) -> EpdeSearch:
     """
     Perform EPDE discovery to find equations describing the relationship between grid and Poynting vector.
 

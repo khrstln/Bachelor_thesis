@@ -1,13 +1,15 @@
 import torch
+import tedeous
 from tedeous.callbacks import early_stopping, plot
 from tedeous.data import Domain, Conditions, Equation
 from tedeous.device import solver_device, check_device
 from tedeous.model import Model
 from tedeous.models import mat_model
 from tedeous.optimizers.optimizer import Optimizer
+from typing import Any
 
 
-def get_grid_for_solver(arg0):
+def get_grid_for_solver(arg0) -> torch.Tensor:
     """
     Prepares the input data for the solver by converting a list of coordinates into a torch tensor.
 
@@ -22,7 +24,7 @@ def get_grid_for_solver(arg0):
     return coord_list_train.reshape(-1, 1).float()
 
 
-def set_boundary(arg_values: list, func_values: list, variable_names: [str] = 'y'):
+def set_boundary(arg_values: list, func_values: list, variable_names: [str] = 'y') -> tedeous.data.Conditions:
     """
     Sets the boundary conditions for the solver based on the provided argument and function values.
 
@@ -40,7 +42,7 @@ def set_boundary(arg_values: list, func_values: list, variable_names: [str] = 'y
     return boundaries
 
 
-def get_nn():
+def get_nn() -> torch.nn.Sequential:
     """
     Creates and returns a neural network model with a specific architecture.
 
@@ -60,9 +62,10 @@ def get_nn():
 
 
 def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
-                    mode: str = 'autograd'):
+                    mode: str = 'autograd') -> (Any, Any):
     """
-    Solve the given equation using the specified solver mode and return the predicted solutions for training and testing grids.
+    Solve the given equation using the specified solver mode and return the predicted solutions for training and
+    testing grids.
 
     Args:
         eq: The equation to solve.
@@ -76,8 +79,6 @@ def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
         tuple: Predicted solutions for the training and testing grids.
     """
 
-    solver_device('cpu')
-
     grid_train = get_grid_for_solver(m_grid_train)
     grid_test = get_grid_for_solver(m_grid_test)
 
@@ -89,8 +90,6 @@ def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
     equation = Equation()
     equation.add(eq)
 
-    # img_dir = os.path.join(os.path.dirname(__file__), 'optics_intermediate') перенести эту строчку в main потом,
-    # тут определяется имя директории, в которую графики решений будут сохраняться
     net = get_nn() if mode in {'NN', 'autograd'} else mat_model(domain, equation)
 
     model = Model(net, domain, equation, boundaries)
