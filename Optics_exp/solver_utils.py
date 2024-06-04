@@ -60,8 +60,22 @@ def get_nn():
 
 
 def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
-                    mode: str = 'autograd',
-                    ):
+                    mode: str = 'autograd'):
+    """
+    Solve the given equation using the specified solver mode and return the predicted solutions for training and testing grids.
+
+    Args:
+        eq: The equation to solve.
+        poynting_vec: The Poynting vector data.
+        m_grid_train: The training grid data.
+        m_grid_test: The testing grid data.
+        img_dir: The directory to save solution images.
+        mode: The solver mode to use (default is 'autograd').
+
+    Returns:
+        tuple: Predicted solutions for the training and testing grids.
+    """
+
     solver_device('cpu')
 
     grid_train = get_grid_for_solver(m_grid_train)

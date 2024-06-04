@@ -4,13 +4,33 @@ from epde.interface.prepared_tokens import GridTokens, CacheStoredTokens
 
 
 def set_de_params(epde_search_obj: epde_alg.EpdeSearch, pop_size: int, training_epochs: int):
+    """
+    Set the MOEADD parameters for the EPDE search object.
+
+    Args:
+        epde_search_obj: The EPDE search object to set parameters for.
+        pop_size: The population size.
+        training_epochs: The number of training epochs.
+
+    Returns:
+        None
+    """
     epde_search_obj.set_moeadd_params(population_size=pop_size, training_epochs=training_epochs)
 
 
 def get_polynomial_family(tensor: np.ndarray, order: int, token_type='polynomials'):
     """
-    Get family of tokens for polynomials of orders from second up to order argument.
+    Get family of tokens for polynomials of orders from second up to the order argument.
+
+    Args:
+        tensor: The input tensor for generating polynomial tokens.
+        order: The maximum order of polynomials to generate tokens for.
+        token_type: The type of tokens to be generated (default is 'polynomials').
+
+    Returns:
+        CacheStoredTokens: An object containing the generated polynomial tokens.
     """
+
     assert order > 1
     labels = [f'I^{idx + 1}' for idx in range(1, order)]
     tensors = {label: tensor ** (idx + 2) for idx, label in enumerate(labels)}
@@ -26,6 +46,27 @@ def epde_discovery(grid: np.ndarray, poynting_vec: np.ndarray, pop_size: int = 5
                    variable_names: [str] = None, max_deriv_order: tuple = (2,),
                    equation_terms_max_number: int = 5, data_fun_pow: int = 1,
                    use_ann: bool = False, derivs: [[np.ndarray]] = None):
+    """
+    Perform EPDE discovery to find equations describing the relationship between grid and Poynting vector.
+
+    Args:
+        grid: The grid data.
+        poynting_vec: The Poynting vector data.
+        pop_size: The population size (default is 5).
+        factors_max_number: The maximum number of factors in the equations (default is 1).
+        poly_order: The order of polynomials to generate tokens for (default is 4).
+        training_epochs: The number of training epochs (default is 100).
+        variable_names: The names of variables (default is ['I']).
+        max_deriv_order: The maximum derivative order (default is (2,)).
+        equation_terms_max_number: The maximum number of terms in the equations (default is 5).
+        data_fun_pow: The power for data function (default is 1).
+        use_ann: Flag to indicate whether to use ANN preprocessor (default is False).
+        derivs: The derivatives data (default is None).
+
+    Returns:
+        EpdeSearch: The object containing the discovered equations.
+    """
+
     if variable_names is None:
         variable_names = ['I', ]
     dimensionality = poynting_vec.ndim - 1
