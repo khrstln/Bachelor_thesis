@@ -92,18 +92,22 @@ def set_main_ax(ax: Axes, axins: Axes, m_grid_train: np.ndarray, m_grid_test: np
     ax.grid(True)
 
 
-def set_plot(r0: int | float, img_filename: str) -> None:
+def set_plot(r0: int | float, img_filename: str, save_solutions: bool = True) -> None:
     plt.legend(loc=4)
     plt.title(fr"$I_y(H), r_0 = {r0}\mu m$, $\lambda = {wave_length} \mu m$")
     plt.xlabel(r'$H / \lambda$')
     plt.ylabel(r'$I_y(H)$')
-    plt.savefig(img_filename)
-    plt.close()
+    if save_solutions:
+        plt.savefig(img_filename)
+        plt.close()
+    else:
+        plt.plot()
 
 
 def draw_solution(r0: int | float, i: int, run: int, m_grid_train: np.ndarray,
                   m_grid_test: np.ndarray, poynting_vec_test: np.ndarray,
-                  pred_solution_train: Any, pred_solution_test: Any, results_dir: str) -> None:
+                  pred_solution_train: Any, pred_solution_test: Any, results_dir: str,
+                  save_solutions: bool = True) -> None:
     fig = plt.figure(dpi=200)
     ax = fig.add_subplot()
 
@@ -115,10 +119,28 @@ def draw_solution(r0: int | float, i: int, run: int, m_grid_train: np.ndarray,
     set_main_ax(ax, axins, m_grid_train, m_grid_test, poynting_vec_test, pred_solution_train, rmse, mape)
 
     img_filename = os.path.join(results_dir, fr'solutions visualization\sln_{r0}_{i}_{run}.png')
-    set_plot(r0, img_filename)
+    set_plot(r0, img_filename, save_solutions=save_solutions)
 
 
-def optics_exp(r0: int | float, exp_name: str = 'optics', nruns: int = 1, solve_equations: bool = True):
+def save_solution_data(r0: int | float, i: int, run: int, pred_solution: Any, results_dir: str) -> None:
+    sln_data_filename = os.path.join(results_dir, fr'solutions data\sln_data_{r0}_{i}_{run}.txt')
+    np.savetxt(sln_data_filename, pred_solution.detach.numpy())
+
+
+def save_splitted_exp_data(r0: int | float, m_grid_train: np.ndarray,
+                           m_grid_test: np.ndarray, poynting_vec_train: np.ndarray,
+                           poynting_vec_test: np.ndarray, results_dir: str) -> None:
+    grid_train_filename = os.path.join(results_dir, fr'splitted exp data\grid_train_{r0}.txt')
+    grid_test_filename = os.path.join(results_dir, fr'splitted exp data\grid_test_{r0}.txt')
+    poynting_vec_train_filename = os.path.join(results_dir, fr'splitted exp data\poynting_vec_train_{r0}.txt')
+    poynting_vec_test_filename = os.path.join(results_dir, fr'splitted exp data\poynting_vec_test_{r0}.txt')
+    np.savetxt(grid_train_filename, m_grid_train)
+    np.savetxt(grid_test_filename, m_grid_test)
+    np.savetxt(poynting_vec_train_filename, poynting_vec_train)
+    np.savetxt(poynting_vec_test_filename, poynting_vec_test)
+
+
+def optics_exp(r0: int | float, exp_name: str = 'optics', nruns: int = 1, solve_equations: bool = True) -> None:
     """
     Perform an optics experiment with EPDE discovery and solver solution for a given r0 value.
 
@@ -134,6 +156,7 @@ def optics_exp(r0: int | float, exp_name: str = 'optics', nruns: int = 1, solve_
     m_grid, poynting_vec = read_data(r0, exp_name)
     m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test = split_data(m_grid, poynting_vec)
     results_dir = get_result_dir(exp_name)
+    save_splitted_exp_data(r0, m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test, results_dir)
     for run in range(nruns):
         epde_search_obj = epde_discovery((m_grid_train / wave_length), poynting_vec_train, factors_max_number=1,
                                          poly_order=4, variable_names=['I'], max_deriv_order=(2,),
@@ -148,7 +171,10 @@ def optics_exp(r0: int | float, exp_name: str = 'optics', nruns: int = 1, solve_
                                                                           (m_grid_train / wave_length),
                                                                           (m_grid_test / wave_length), img_dir=img_dir)
                 draw_solution(r0, i, run, m_grid_train, m_grid_test, poynting_vec_test,
-                              pred_solution_train, pred_solution_test, results_dir)
+                              pred_solution_train, pred_solution_test, results_dir, save_solutions=True)
+                save_solution_data(r0, i, run, pred_solution_train, results_dir)  # сохраняю данные, которые выдает
+                # численная модель решения на тренировочном наборе, вроде для рисования графиков как раз результаты
+                # на тренировочном наборе нужны, а вот ошибка измеряется на тестовом
             txt_filename = os.path.join(results_dir, fr'text equations\eqn_{r0}_{i}_{run}.txt')
             with open(txt_filename, 'w') as the_file:
                 the_file.write(text_eq[i])
