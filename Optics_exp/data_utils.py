@@ -8,6 +8,7 @@ def read_data(r0: float, exp_name: str = 'optics') -> (np.ndarray, np.ndarray):
     Reads grid and Poynting vector data from files based on the fixed r0 value.
 
     Args:
+        exp_name: The name of the experiment.
         r0 (float): The fixed r0 value used to locate the data files.
 
     Returns:

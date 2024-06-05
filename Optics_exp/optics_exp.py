@@ -68,32 +68,39 @@ def get_inserted_ax(ax: Axes, r0: int | float) -> Axes:
     return axins
 
 
-def set_inserted_ax(axins: Axes, m_grid_test: np.ndarray, m_grid_train: np.ndarray,
-                    poynting_vec_test: Any, pred_solution_train: Any,
-                    start_y: int | float = -1, stop_y: int | float = 0.1, step_y: int | float = 0.2) -> None:
+def set_inserted_ax(axins: Axes, m_grid_train: np.ndarray, m_grid_test: np.ndarray,
+                    poynting_vec_train: np.ndarray, poynting_vec_test: Any, pred_solution_train: Any,
+                    start_y: int | float = -1, stop_y: int | float = 0.1, step_y: int | float = 0.2,
+                    add_train_data: bool = False) -> None:
     axins.set_yticks(np.arange(start_y, stop_y, step_y))
     axins.grid(True)
-    axins.plot((m_grid_test / wave_length), poynting_vec_test, '+')
+    if add_train_data:
+        axins.plot((m_grid_train / wave_length), poynting_vec_train, '+', label='Training data')
+    axins.plot((m_grid_test / wave_length), poynting_vec_test, '.', color='black')
     axins.plot((m_grid_train / wave_length), pred_solution_train.detach().numpy(), color='r')
 
 
 def set_main_ax(ax: Axes, axins: Axes, m_grid_train: np.ndarray, m_grid_test: np.ndarray,
-                poynting_vec_test: np.ndarray, pred_solution_train: Any, rmse: float, mape: float) -> None:
+                poynting_vec_train: np.ndarray, poynting_vec_test: np.ndarray, pred_solution_train: Any,
+                rmse: float, mape: float, add_train_data: bool = False) -> None:
     ax.indicate_inset_zoom(axins, edgecolor="black")
     ax.set_xticks(np.arange(0, np.max((m_grid_test / wave_length)) + 10, 10))
     ax.set_yticks(np.arange(-1., 0.5, 0.2))
-    ax.plot((m_grid_test / wave_length), poynting_vec_test, '+', label='Exp data')
+    if add_train_data:
+        ax.plot((m_grid_train / wave_length), poynting_vec_train, '+', label='Training data')
+    ax.plot((m_grid_test / wave_length), poynting_vec_test, '.', color='black', label='Test data')
     ax.plot((m_grid_train / wave_length), pred_solution_train.detach().numpy(), color='r',
             label='Solution of the discovered DE')
-    ax.text(70, -0.9,
-            f'RMSE = {rmse:.2e}', fontsize=10)
     ax.text(70, -0.8,
+            f'RMSE = {rmse:.2e}', fontsize=10)
+    ax.text(70, -0.75,
             f'MAPE = {mape:.2e}', fontsize=10)
     ax.grid(True)
 
 
-def set_plot(r0: int | float, img_filename: str, save_solutions: bool = True) -> None:
-    plt.legend(loc=4)
+def set_plot(r0: int | float, img_filename: str, save_solutions: bool = True, add_legend: bool = False) -> None:
+    if add_legend:
+        plt.legend(loc=4)
     plt.title(fr"$I_y(H), r_0 = {r0}\mu m$, $\lambda = {wave_length} \mu m$")
     plt.xlabel(r'$H / \lambda$')
     plt.ylabel(r'$I_y(H)$')
@@ -105,35 +112,36 @@ def set_plot(r0: int | float, img_filename: str, save_solutions: bool = True) ->
 
 
 def draw_solution(r0: int | float, i: int, run: int, m_grid_train: np.ndarray,
-                  m_grid_test: np.ndarray, poynting_vec_test: np.ndarray,
+                  m_grid_test: np.ndarray, poynting_vec_train: np.ndarray, poynting_vec_test: np.ndarray,
                   pred_solution_train: Any, pred_solution_test: Any, results_dir: str,
-                  save_solutions: bool = True) -> None:
+                  save_solutions: bool = True, add_legend: bool = False) -> None:
     fig = plt.figure(dpi=200)
     ax = fig.add_subplot()
 
     axins = get_inserted_ax(ax, r0)
-    set_inserted_ax(axins, m_grid_test, m_grid_train, poynting_vec_test, pred_solution_train)
+    set_inserted_ax(axins, m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test, pred_solution_train)
 
     rmse = np.sqrt(mean_squared_error(poynting_vec_test, pred_solution_test.detach().numpy()))
     mape = mean_absolute_percentage_error(poynting_vec_test, pred_solution_test.detach().numpy())
-    set_main_ax(ax, axins, m_grid_train, m_grid_test, poynting_vec_test, pred_solution_train, rmse, mape)
+    set_main_ax(ax, axins, m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test,
+                pred_solution_train, rmse, mape)
 
     img_filename = os.path.join(results_dir, fr'solutions visualization\sln_{r0}_{i}_{run}.png')
-    set_plot(r0, img_filename, save_solutions=save_solutions)
+    set_plot(r0, img_filename, save_solutions=save_solutions, add_legend=add_legend)
 
 
 def save_solution_data(r0: int | float, i: int, run: int, pred_solution: Any, results_dir: str) -> None:
     sln_data_filename = os.path.join(results_dir, fr'solutions data\sln_data_{r0}_{i}_{run}.txt')
-    np.savetxt(sln_data_filename, pred_solution.detach.numpy())
+    np.savetxt(sln_data_filename, pred_solution.detach().numpy())
 
 
-def save_splitted_exp_data(r0: int | float, m_grid_train: np.ndarray,
-                           m_grid_test: np.ndarray, poynting_vec_train: np.ndarray,
-                           poynting_vec_test: np.ndarray, results_dir: str) -> None:
-    grid_train_filename = os.path.join(results_dir, fr'splitted exp data\grid_train_{r0}.txt')
-    grid_test_filename = os.path.join(results_dir, fr'splitted exp data\grid_test_{r0}.txt')
-    poynting_vec_train_filename = os.path.join(results_dir, fr'splitted exp data\poynting_vec_train_{r0}.txt')
-    poynting_vec_test_filename = os.path.join(results_dir, fr'splitted exp data\poynting_vec_test_{r0}.txt')
+def save_split_exp_data(r0: int | float, m_grid_train: np.ndarray,
+                        m_grid_test: np.ndarray, poynting_vec_train: np.ndarray,
+                        poynting_vec_test: np.ndarray, results_dir: str) -> None:
+    grid_train_filename = os.path.join(results_dir, fr'split exp data\grid_train_{r0}.txt')
+    grid_test_filename = os.path.join(results_dir, fr'split exp data\grid_test_{r0}.txt')
+    poynting_vec_train_filename = os.path.join(results_dir, fr'split exp data\poynting_vec_train_{r0}.txt')
+    poynting_vec_test_filename = os.path.join(results_dir, fr'split exp data\poynting_vec_test_{r0}.txt')
     np.savetxt(grid_train_filename, m_grid_train)
     np.savetxt(grid_test_filename, m_grid_test)
     np.savetxt(poynting_vec_train_filename, poynting_vec_train)
@@ -156,11 +164,11 @@ def optics_exp(r0: int | float, exp_name: str = 'optics', nruns: int = 1, solve_
     m_grid, poynting_vec = read_data(r0, exp_name)
     m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test = split_data(m_grid, poynting_vec)
     results_dir = get_result_dir(exp_name)
-    save_splitted_exp_data(r0, m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test, results_dir)
+    save_split_exp_data(r0, m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test, results_dir)
     for run in range(nruns):
         epde_search_obj = epde_discovery((m_grid_train / wave_length), poynting_vec_train, factors_max_number=1,
                                          poly_order=4, variable_names=['I'], max_deriv_order=(2,),
-                                         equation_terms_max_number=5, data_fun_pow=1)
+                                         equation_terms_max_number=5, data_fun_pow=1, training_epochs=5)
 
         text_eq = epde_search_obj.equations(only_print=False, only_str=True, num=1)[0]
         eqs_solver_form = get_equations_solver_form(epde_search_obj)
@@ -169,9 +177,10 @@ def optics_exp(r0: int | float, exp_name: str = 'optics', nruns: int = 1, solve_
             if solve_equations:
                 pred_solution_train, pred_solution_test = solver_solution(eq[0][1], poynting_vec,
                                                                           (m_grid_train / wave_length),
-                                                                          (m_grid_test / wave_length), img_dir=img_dir)
-                draw_solution(r0, i, run, m_grid_train, m_grid_test, poynting_vec_test,
-                              pred_solution_train, pred_solution_test, results_dir, save_solutions=True)
+                                                                          (m_grid_test / wave_length), img_dir, training_epochs=100)
+                draw_solution(r0, i, run, m_grid_train, m_grid_test, poynting_vec_train, poynting_vec_test,
+                              pred_solution_train, pred_solution_test, results_dir, save_solutions=True,
+                              add_legend=False)
                 save_solution_data(r0, i, run, pred_solution_train, results_dir)  # сохраняю данные, которые выдает
                 # численная модель решения на тренировочном наборе, вроде для рисования графиков как раз результаты
                 # на тренировочном наборе нужны, а вот ошибка измеряется на тестовом

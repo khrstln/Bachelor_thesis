@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import tedeous
 from tedeous.callbacks import early_stopping, plot
@@ -61,7 +62,8 @@ def get_nn() -> torch.nn.Sequential:
     )
 
 
-def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
+def solver_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
+                    m_grid_test: np.ndarray, img_dir: str, training_epochs: int = 10000,
                     mode: str = 'autograd') -> (Any, Any):
     """
     Solve the given equation using the specified solver mode and return the predicted solutions for training and
@@ -73,6 +75,7 @@ def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
         m_grid_train: The training grid data.
         m_grid_test: The testing grid data.
         img_dir: The directory to save solution images.
+        training_epochs: Number of epochs for training (default is 10000).
         mode: The solver mode to use (default is 'autograd').
 
     Returns:
@@ -102,7 +105,7 @@ def solver_solution(eq, poynting_vec, m_grid_train, m_grid_test, img_dir: str,
                                          info_string_every=1000)
     cb_plots = plot.Plots(save_every=1000, print_every=None, img_dir=img_dir)
     optimizer = Optimizer('Adam', {'lr': 1e-3})
-    model.train(optimizer, 10000, save_model=False, callbacks=[cb_es, cb_plots])
+    model.train(optimizer, training_epochs, save_model=False, callbacks=[cb_es, cb_plots])
     predicted_solution_train = check_device(net(grid_train)).reshape(-1)
     predicted_solution_test = check_device(net(grid_test)).reshape(-1)
     return predicted_solution_train, predicted_solution_test

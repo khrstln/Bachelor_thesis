@@ -11,4 +11,4 @@ if __name__ == '__main__':
     #     optics_exp(r0_fix, exp_name='optics')
 
     for r0_fix in [0.1]:
-        optics_exp(r0_fix, exp_name='optics')
+        optics_exp(r0_fix, exp_name='optics_test')
