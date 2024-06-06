@@ -5,47 +5,46 @@ clear all;
 format long;
 
 
-seed = 40;
+seed = 0;
 rng(seed); % initialization of random number generator 
 
 
 
 %% Parameters of the system
 wl = 0.5; %wavelength in micrometers
-dl = 0.8; % period of the structure in micrometers 2
-dh = 0.8; % layer thickness in micrometers 
+dl = 15; % period of the structure in micrometers 2
+dh = 50; % layer thickness in micrometers 
 epss = 4; % dielectric permittivity of cylinders 
 epsm = 1; %  dielectric permittivity of background media
-r0_fix = 0.2; % radius of cylinders
-n0 = 0.3; %packing density of cylinders
+r0_fix = 0.8; % radius of cylinders
+n0 = 0.5; %packing density of cylinders
 
 
 
-n_var = 1; % ensemble size for averaging
+n_var = 250; % ensemble size for averaging
 
 
 
-dn_sl = 5; %number of slices per 1 cylinder
+dn_sl = 41; %number of slices per 1 cylinder
 n_cyl = floor(dh*dl/pi./r0_fix^2*n0); % number of cylinders in the unit cell
 n_cyl_tot = n_cyl; %total number of cylinders; for const radius n_cyl_tot = n_cyl
 n_sl = dn_sl*ceil(dh/(2*max(r0_fix))); % total number of slices per unit cell
 dy = dh/n_sl; % slice thickness
 delta = 2*sqrt(r0_fix^2 - (r0_fix-2*dy)^2); %the smallest feature
-no = 3;
 % no = 2*ceil(max(4*dl/wl, 2*dl/delta)); % number of Fourier modesunder consideration
 min_dist = dl/1000; % min distance 
-
+no=150;
 %% Target values
-grid = 1:1:n_sl; %grid of slices for measurements
+grid = 1:10:n_sl; %grid of slices for measurements
+writematrix(grid*dy, strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\grid.txt"))
+
 R_sum = zeros(numel(grid), n_var); %array of total reflected energy
 T_sum = zeros(numel(grid), n_var); %array of total reflected energy
-% R_sum = zeros(n_sl, n_var);
-% T_sum = zeros(n_sl, n_var);
 
 %% ensamble averaging
 
 for i_var = 1:n_var
-    
+    disp([num2str(i_var), ' iter of ', num2str(n_var)])
 %% Generation of spheres
     x0 = ones(1, 2*n_cyl_tot)*2*max(dh, dl); 
     y0 = ones(1, 2*n_cyl_tot)*2*max(dh, dl); 
@@ -66,7 +65,7 @@ for i_var = 1:n_var
         y = r + (dh-2*r) * rand(1);
         inters = 0;
 
-        %cylinders intersection check
+        %cylihnders intersection check
         if i_cyl >= 0 
           dr = ((x-x0).^2 + (y-y0).^2) .^ (0.5) - (r+r0) - min_dist; % distances to other cylinders
           drm = dr; % distances to other cylinders from mirrored coordinate
@@ -100,27 +99,25 @@ for i_var = 1:n_var
     r0 = r0(1:numel(x0));
 
 %% Plotting cylinders
-    figure();
-     for i = 1:i_cyl_tot
-         c = [x0(i) y0(i)];
-         pos = [c-r0(i) 2*r0(i) 2*r0(i)];
-         rectangle('Position',pos,'Curvature',[1 1])
-         hold on;   
-     end
-    plot(-dl/2*ones(1, numel(0:dh)), 0:dh, '--');
-     plot(dl/2*ones(1, numel(0:dh)), 0:dh,  '--');
-     axis equal
-    xlim ([-dl/2-max(r0_fix), dl/2+max(r0_fix)])
-    ylim ([0, dh])
+    % figure();
+    %  for i = 1:i_cyl_tot
+    %      c = [x0(i) y0(i)];
+    %      pos = [c-r0(i) 2*r0(i) 2*r0(i)];
+    %      rectangle('Position',pos,'Curvature',[1 1])
+    %      hold on;   
+    %  end
+    % plot(-dl/2*ones(1, numel(0:dh)), 0:dh, '--');
+    %  plot(dl/2*ones(1, numel(0:dh)), 0:dh,  '--');
+    %  axis equal
+    % xlim ([-dl/2-max(r0_fix), dl/2+max(r0_fix)])
+    % ylim ([0, dh])
 
-% writematrix(x0, "C:\Users\HP\Desktop\code\Python code\SM_data\x0.txt");
-% writematrix(y0, "C:\Users\HP\Desktop\code\Python code\SM_data\y0.txt");
-% writematrix(r0, "C:\Users\HP\Desktop\code\Python code\SM_data\r0.txt");
+
 %% Slicing
 %% plotting slices
-        for i = 0:(n_sl-1)
-            plot(-dl/2:dl/2, i*dy*ones(1, numel(-dl/2:dl/2)), 'Color', 'black')
-        end
+        % for i = 0:(n_sl-1)
+        %     plot(-dl/2:dl/2, i*dy*ones(1, numel(-dl/2:dl/2)), 'Color', 'black')
+        % end
 
    
     c_x = 100*dl*ones(1, n_sl * ceil(dl/(min(r0_fix)))*4); % ractangle center coordinate
@@ -182,7 +179,7 @@ for i_var = 1:n_var
                          eps_r(i_rect) = epsm;  
 
 
-                    else % if rectangles for 2 different cylinders intersect
+                    else % if rectangles for 2 different cylinders  intersect
                        w_r_old = w_r(i_rect);
                        w_r(i_rect) = xr -  (c_x(i_rect) - w_r(i_rect)/2);
                        c_x(i_rect) = (xr +  (c_x(i_rect) - w_r_old/2))/2;
@@ -224,22 +221,22 @@ for i_var = 1:n_var
 
 
 %% Plotting rectangles 
-        for i_sl = 1:numel(n_mesh)
-            n_rec = n_mesh(i_sl);
-            y = (i_sl - 1) * dy/dl;
-            h = dy/dl;
-            for i_rec = 1:n_rec
-              i_x = sum(n_mesh(1:(i_sl-1))) + i_rec;
-              x = c_x(i_x) - w_r(i_x)/2;
-              w = w_r(i_x);
-              if eps_r(i_x) == epsm
-                rectangle('Position', [x y w h]*dl, 'EdgeColor', 'k', 'FaceColor', 'b');
-              else
-                  rectangle('Position', [x y w h]*dl, 'EdgeColor', 'k');
-              end
-            end
-        end
-        hold off;
+        % for i_sl = 1:numel(n_mesh)
+        %     n_rec = n_mesh(i_sl);
+        %     y = (i_sl - 1) * dy/dl;
+        %     h = dy/dl;
+        %     for i_rec = 1:n_rec
+        %       i_x = sum(n_mesh(1:(i_sl-1))) + i_rec;
+        %       x = c_x(i_x) - w_r(i_x)/2;
+        %       w = w_r(i_x);
+        %       if eps_r(i_x) == epsm
+        %         rectangle('Position', [x y w h]*dl, 'EdgeColor', 'k', 'FaceColor', 'b');
+        %       else
+        %           rectangle('Position', [x y w h]*dl, 'EdgeColor', 'k');
+        %       end
+        %     end
+        % end
+        % hold off;
 
         
         
@@ -325,7 +322,7 @@ for i_var = 1:n_var
             % block SM(:,:,2,1) corresponds to transmission from substrate to superstrate
             % block SM(:,:,1,2) corresponds to transmission from superstrate to substrate
             SM = fmm(no, kx0, wl/gp, wv*gh, eps_sub, eps_sup, FM, pol);
-            writematrix(SM, "C:\Users\HP\Desktop\code\Python code\SM_data\SM_matlab_" + num2str(i_grid) + ".csv");
+
             if numel(SM_up) ~= 1 %? first slice in a layer               
                 SM_up = mul_SM(SM, SM_up);
             else 
@@ -353,7 +350,7 @@ for i_var = 1:n_var
                 b_2 = SM_up(:,:,1,2) * V_inc(:,2) + SM_up(:,:,1,1) * SM_down(:,:,2,1) * V_inc(:,1);
                 V_downward = linsolve(A_2, b_2);
 
-            
+                
                 Poyting_z = calc_Poynting(no, V_upward, V_downward, kx0, wl/gp, eps_sub, eps_sup, pol);
                 
             	[kz1, kz2] = fmm_kxz(no, kx0, 0, wl/gp, eps_sub, eps_sup);
@@ -368,13 +365,13 @@ for i_var = 1:n_var
 
                 P_inc = 0.5*sum( abs(V_inc(:,2).^2).*real(kz2) );
                 % R_sum(i_grid, i_var) = sum(Poynting_reflected(:,2)); % transmitted energy
-                T_sum(i_grid, i_var) = sum(Poyting_z/P_inc); % transmitted energy     
-                % T_sum(i_grid, i_var) = (Poyting_z(ind0)/P_inc);
+%                 T_sum(i_grid, i_var) = sum(Poyting_z/P_inc); % transmitted energy     
+                T_sum(i_grid, i_var) = (Poyting_z(ind0)/P_inc); % transmitted energy zero harmonic
                 i_grid  = i_grid + 1;
             end
         end
        
-        
+writematrix(T_sum(:,i_var), strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\T_", num2str(i_var), ".txt"))       
         
    
 end
@@ -382,20 +379,19 @@ end
 
 % R_av = mean(R_sum, 2);
 T_av = mean(T_sum, 2);
-% writematrix(T_av, "C:\Users\HP\Desktop\code\Matlab code\T_av.txt")
-
-set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
-set(groot, 'defaultLegendInterpreter','latex');
-
-csvwrite('T_1.csv',T_av);
-csvwrite('grid_1.csv',grid);
-
-figure()
-hold on;
-ax = gca;
-ax.FontSize = 14;
-% plot(grid*dy, R_av, 'LineWidth', 2, 'Color', 'r');
-plot(grid*dy, T_av, 'LineWidth', 2, 'Color', 'b');
-% legend({"R","T"})
-xlabel('Depth, H', 'fontsize', 18, 'Interpreter', 'Latex');
-ylabel('T(H) averaged', 'fontsize', 18, 'Interpreter', 'Latex');
+writematrix(T_av, strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\T_av.txt"))
+% set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+% set(groot, 'defaultLegendInterpreter','latex');
+% 
+% % csvwrite('T_1.csv',T_av);
+% % csvwrite('grid_1.csv',grid);
+% 
+% figure()
+% hold on;
+% ax = gca;
+% ax.FontSize = 14;
+% % plot(grid*dy, R_av, 'LineWidth', 2, 'Color', 'r');
+% plot(grid*dy, T_av, 'LineWidth', 2, 'Color', 'b');
+% % legend({"R","T"})
+% xlabel('Depth, H', 'fontsize', 18, 'Interpreter', 'Latex');
+% ylabel('T(H) averaged', 'fontsize', 18, 'Interpreter', 'Latex');
