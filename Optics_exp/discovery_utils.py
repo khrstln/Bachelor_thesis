@@ -60,7 +60,7 @@ def epde_discovery(grid: np.ndarray, poynting_vec: np.ndarray, pop_size: int = 5
         variable_names: The names of variables (default is ['I']).
         max_deriv_order: The maximum derivative order (default is (2,)).
         equation_terms_max_number: The maximum number of terms in the equations (default is 5).
-        data_fun_pow: The power for data function (default is 1).
+        data_fun_pow: The highest power of derivative-like token in the equation (default is 1).
         use_ann: Flag to indicate whether to use ANN preprocessor (default is False).
         derivs: The derivatives data (default is None).
 

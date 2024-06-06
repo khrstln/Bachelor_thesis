@@ -6,4 +6,11 @@
 
 *\__pycache__
 /Optics_exp/results_optics_test/
-/Optics_exp/optics_test_data/
+/Optics_exp/data/optics_test_data/
+/Optics_exp/results/results_optics_05.06.24/
+/Optics_exp/results/results_optics_05.06.24/solutions data/
+/Optics_exp/results/results_optics/solutions visualization/solutions factors_max_number=1/
+/Optics_exp/results/results_optics/solutions visualization/solutions factors_max_number=2/
+/Optics_exp/results/results_optics/solutions visualization/solutions_1/
+/Optics_exp/results/results_optics/solutions visualization/solutions_2/
+/Optics_exp/results/results_optics/solutions visualization/solutions_3/
