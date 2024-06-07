@@ -38,11 +38,9 @@ no=150;
 grid = 1:10:n_sl; %grid of slices for measurements
 writematrix(grid*dy, strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\grid.txt"))
 
-R_sum = zeros(numel(grid), n_var); %array of total reflected energy
-T_sum = zeros(numel(grid), n_var); %array of total reflected energy
+T_sum = zeros(numel(grid), n_var); %array of total transmitted energy
 
 %% ensamble averaging
-
 for i_var = 1:n_var
     disp([num2str(i_var), ' iter of ', num2str(n_var)])
 %% Generation of spheres
@@ -339,8 +337,6 @@ for i_var = 1:n_var
                 SM_full_slab(no+1:2*no,1:no) = SM_mult(:,:,2,1); 
                 SM_full_slab(1:no,no+1:2*no) = SM_mult(:,:,1,2); 
                 SM_full_slab(no+1:2*no,no+1:2*no) = SM_mult(:,:,2,2);
-                % 
-                % writematrix(SM_full_slab, "C:\Users\HP\Desktop\code\S-matrix full slab\SM_full_slab_" + num2str(i_grid) + ".csv");
 
                 A_1 = eye(no) - SM_down(:,:,2,2) * SM_up(:,:,1,1);
                 b_1 = SM_down(:,:,2,2) * SM_up(:,:,1,2) * V_inc(:,2) + SM_down(:,:,2,1) * V_inc(:,1);
@@ -363,9 +359,7 @@ for i_var = 1:n_var
 
                 Poynting_reflected = fmm_efficiency(no, V_inc, V_dif, kx0, wl/gp, eps_sub, eps_sup, pol);
 
-                P_inc = 0.5*sum( abs(V_inc(:,2).^2).*real(kz2) );
-                % R_sum(i_grid, i_var) = sum(Poynting_reflected(:,2)); % transmitted energy
-%                 T_sum(i_grid, i_var) = sum(Poyting_z/P_inc); % transmitted energy     
+                P_inc = 0.5*sum( abs(V_inc(:,2).^2).*real(kz2) );  
                 T_sum(i_grid, i_var) = (Poyting_z(ind0)/P_inc); % transmitted energy zero harmonic
                 i_grid  = i_grid + 1;
             end
@@ -377,21 +371,15 @@ writematrix(T_sum(:,i_var), strcat("C:\Users\iliya.hrustalev\Matlab code\differe
 end
 %% plotting obtained dependecy
 
-% R_av = mean(R_sum, 2);
 T_av = mean(T_sum, 2);
 writematrix(T_av, strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\T_av.txt"))
 % set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
 % set(groot, 'defaultLegendInterpreter','latex');
-% 
-% % csvwrite('T_1.csv',T_av);
-% % csvwrite('grid_1.csv',grid);
-% 
 % figure()
 % hold on;
 % ax = gca;
 % ax.FontSize = 14;
-% % plot(grid*dy, R_av, 'LineWidth', 2, 'Color', 'r');
 % plot(grid*dy, T_av, 'LineWidth', 2, 'Color', 'b');
-% % legend({"R","T"})
+% % legend({"T"})
 % xlabel('Depth, H', 'fontsize', 18, 'Interpreter', 'Latex');
 % ylabel('T(H) averaged', 'fontsize', 18, 'Interpreter', 'Latex');
