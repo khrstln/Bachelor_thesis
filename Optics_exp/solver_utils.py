@@ -3,11 +3,10 @@ import torch
 import tedeous
 from tedeous.callbacks import early_stopping, plot
 from tedeous.data import Domain, Conditions, Equation
-from tedeous.device import solver_device, check_device
+from tedeous.device import check_device
 from tedeous.model import Model
 from tedeous.models import mat_model
 from tedeous.optimizers.optimizer import Optimizer
-from typing import Any
 
 
 def get_grid_for_solver(arg0) -> torch.Tensor:
@@ -62,9 +61,9 @@ def get_nn() -> torch.nn.Sequential:
     )
 
 
-def solver_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
-                    m_grid_test: np.ndarray, img_dir: str, training_epochs: int = 10000,
-                    mode: str = 'autograd') -> (Any, Any):
+def get_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
+                 m_grid_test: np.ndarray, img_dir: str, training_epochs: int = 10000,
+                 mode: str = 'autograd') -> (torch.Tensor, torch.Tensor):
     """
     Solve the given equation using the specified solver mode and return the predicted solutions for training and
     testing grids.
