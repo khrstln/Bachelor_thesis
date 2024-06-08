@@ -2,7 +2,14 @@ import numpy as np
 import itertools
 import pandas as pd
 import re
-from experiment import get_result_dir
+from pathlib import Path
+
+
+def get_results_dir(exp_name: str) -> Path:
+    results_dir = Path.cwd() / 'results' / f'results_{exp_name}'
+    if not (Path(results_dir).exists()):
+        Path(results_dir).mkdir()
+    return results_dir
 
 
 def get_eq_terms_from_string(line: str) -> [str]:
@@ -20,7 +27,7 @@ def get_eq_terms_from_string(line: str) -> [str]:
     """
     eq_terms = (line.replace('\n', '').replace(' ', '').
                 replace('{power:1.0}', '').replace('=', '=1.0*').
-                replace('x0', 'y').replace('t{power:1.0,dim:0.0}', 'y'))
+                replace('x0', 'H').replace('t{power:1.0,dim:0.0}', 'H'))
     return re.split("\+|\=", eq_terms)
 
 
@@ -63,12 +70,12 @@ def get_rmse(exp_name: str, r0: int | float, i: int, run: int) -> float:
         The calculated RMSE as a float.
     """
 
-    results_dir_name = get_result_dir(exp_name)
+    results_dir_name = get_results_dir(exp_name)
 
     sln_data_file_path = results_dir_name / 'solutions data' / f'sln_data_test_{r0}_{i}_{run}.txt'
     sln = np.genfromtxt(sln_data_file_path, delimiter=',')
 
-    test_data_file_path = results_dir_name / 'split exp data' / f'poynting_vec_test_{r0}_{i}_{run}.txt'
+    test_data_file_path = results_dir_name / 'split exp data' / f'poynting_vec_test_{r0}.txt'
     test_data = np.genfromtxt(test_data_file_path, delimiter=',')
 
     return np.sqrt(np.mean((sln - test_data) ** 2))
@@ -89,15 +96,14 @@ def read_eqn(exp_name: str, eqn_id: str) -> dict | None:
     Raises:
         None
     """
-    results_dir_name = get_result_dir(exp_name)
-    eqn_file_path = results_dir_name / eqn_id
-    if eqn_file_path.exists() and eqn_file_path.is_file():
-        with eqn_file_path.open() as file:
-            lines = file.readlines()
-            eq_terms = get_eq_terms_from_string(lines[0])
-    else:
+    results_dir_name = get_results_dir(exp_name)
+    eqn_file_path = results_dir_name / 'text equations' / eqn_id
+    if not eqn_file_path.exists():
         return None
 
+    with eqn_file_path.open() as file:
+        lines = file.readlines()
+        eq_terms = get_eq_terms_from_string(lines[0])
     coefs = get_coefs_from_terms(eq_terms)
 
     r0, i, run = eqn_id.split('_')[1:]
@@ -109,14 +115,16 @@ def read_eqn(exp_name: str, eqn_id: str) -> dict | None:
     return coefs
 
 
-def get_results_df(r0_list: [int | float], exp_name: str) -> pd.DataFrame:
+def get_results_df(r0_list: [int | float], exp_name: str, pop_size: int,
+                   nruns: int) -> pd.DataFrame:
     """
     Creates a pandas DataFrame containing results from equations for a list of initial values.
 
     Args:
         r0_list: List containing radius values.
         exp_name: Name of the experiment.
-
+        pop_size: The population size.
+        nruns: The number of runs.
     Returns:
         Pandas DataFrame with the results from the equations.
     """
@@ -125,7 +133,7 @@ def get_results_df(r0_list: [int | float], exp_name: str) -> pd.DataFrame:
     for r0_fix in r0_list:
         eqn_list.extend(
             f'eqn_{r0_fix}_{i}_{j}.txt'
-            for i, j in itertools.product(range(5), range(1))
+            for i, j in itertools.product(range(pop_size), range(nruns))
         )
     read_eq_dict = {
         eq: read_eqn(exp_name, eq)
@@ -147,55 +155,62 @@ def get_equation_latex_form(results_df: pd.DataFrame, eq_name: str) -> str:
         LaTeX formatted string representing the equation.
     """
 
+    rmse = results_df['rmse'][eq_name]
+    results_df = results_df.drop('rmse', axis=1)
     coefs = np.array(results_df.loc[eq_name])
     terms = [fr'{coefs[i]:.3f} \cdot ' + results_df.columns[i].replace('C', '') for i in range(len(coefs)) if
              coefs[i] not in [0.0] and results_df.columns[i] != 'dI/dH']
     terms[0] = "$$" + terms[0]
     eq_name = eq_name.replace('.txt', '')
     params = eq_name.split('_')
-    params = {"$r_0$ = ": params[1], "index = ": params[2], "nrun = ": params[3]}
-    res = "$r_0$ = " + params["$r_0$ = "] + ", index = " + params["index = "] + ", nrun = " + params[
-        "nrun = "] + ": " + " + ".join(terms) + " = dI/dH$$" + "\n\n"
+    params = {"$r_0$ = ": params[1], "index = ": params[2], "run = ": params[3], "rmse = ": f'{rmse:.3f}'}
+    res = "$r_0$ = " + params["$r_0$ = "] + ", index = " + params["index = "] + ", run = " + params[
+        "run = "] + ", rmse = " + params["rmse = "] + ": " + " + ".join(terms) + " = dI/dH$$" + "\n\n"
     res = res.replace('+ -', '- ')
     res = res.replace('dI/dH', r'\frac{dI}{dH}')
     res = res.replace(r'\cdot  ', '')
     return res
 
 
-def save_total_results_csv(r0_list: [int | float], exp_name: str) -> None:
+def save_total_results_csv(r0_list: [int | float], exp_name: str, pop_size: int,
+                           nruns: int) -> None:
     """
     Saves the total results DataFrame to a CSV file for a given experiment.
 
     Args:
         r0_list: List containing radius values.
         exp_name: Name of the experiment.
+        pop_size: The population size.
+        nruns: The number of runs.
 
     Returns:
         None
     """
 
-    results_df = get_results_df(r0_list, exp_name)
-    results_dir_name = get_result_dir(exp_name)
-    results_df.to_csv(results_dir_name / f'results_{exp_name}' / fr'total_results_{exp_name}.csv')
+    results_df = get_results_df(r0_list, exp_name, pop_size, nruns)
+    results_dir_name = get_results_dir(exp_name)
+    results_df.to_csv(results_dir_name / fr'total_results_{exp_name}.csv')
 
 
-def save_total_results_latex_form(r0_list: [int | float], exp_name: str) -> None:
+def save_total_results_latex_form(r0_list: [int | float], exp_name: str,  pop_size: int,
+                           nruns: int) -> None:
     """
     Saves the LaTeX form of total results equations to a Markdown file for a given experiment.
 
     Args:
         r0_list: List containing radius values.
         exp_name: Name of the experiment.
-
+        pop_size: The population size.
+        nruns: The number of runs.
     Returns:
         None
     """
 
-    results_df = get_results_df(r0_list, exp_name)
+    results_df = get_results_df(r0_list, exp_name, pop_size, nruns)
 
-    results_dir_name = get_result_dir(exp_name)
+    results_dir_name = get_results_dir(exp_name)
 
-    total_results_file_path = results_dir_name / f'results_{exp_name}' / fr'total_results_{exp_name}.md'
+    total_results_file_path = results_dir_name / f'total_results_{exp_name}.md'
 
     with total_results_file_path.open(mode='w') as equations_file:
         for eq_name in results_df.index:

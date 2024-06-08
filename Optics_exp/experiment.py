@@ -10,6 +10,7 @@ from matplotlib.axes import Axes
 from discovery_utils import epde_discovery
 from solver_utils import get_solution
 from data_utils import get_data
+from results_analysis import get_results_dir
 
 mpl.rcParams.update(mpl.rcParamsDefault)
 
@@ -29,13 +30,6 @@ def get_split_data(r0: int | float, test_size: float = 0.2,
     poynting_vec_training = poynting_vec_training[inds_training]
     poynting_vec_test = poynting_vec_test[inds_test]
     return m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test
-
-
-def get_result_dir(exp_name: str) -> Path:
-    results_dir = Path(__file__) / 'results' / f'results_{exp_name}'
-    if not (Path(results_dir).exists()):
-        Path(results_dir).mkdir()
-    return results_dir
 
 
 def save_split_exp_data(r0: int | float, m_grid_training: np.ndarray,
@@ -296,7 +290,7 @@ def start_exp(r0: int | float, wave_length: int | float, exp_name: str = 'optics
         variable_names = ['I']
 
     m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test = get_split_data(r0)
-    results_dir = get_result_dir(exp_name)
+    results_dir = get_results_dir(exp_name)
     save_split_exp_data(r0, m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test, results_dir)
 
     for run in range(nruns):

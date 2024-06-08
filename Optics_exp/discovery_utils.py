@@ -69,7 +69,7 @@ def epde_discovery(grid: np.ndarray, poynting_vec: np.ndarray, pop_size: int = 5
                    factors_max_number: int = 1, poly_order: int = 4, training_epochs: int = 100,
                    variable_names: [str] = None, max_deriv_order: (int, ) = (2,),
                    equation_terms_max_number: int = 5, data_fun_pow: int = 1,
-                   use_ann: bool = False, derivs: [[np.ndarray]] = None) -> EpdeSearch:
+                   use_ann: bool = False, derivs: [np.ndarray] = None) -> EpdeSearch:
     """
     Perform EPDE discovery to find equations describing the relationship between grid and Poynting vector.
 
@@ -105,7 +105,7 @@ def epde_discovery(grid: np.ndarray, poynting_vec: np.ndarray, pop_size: int = 5
     polynomial_tokens = get_polynomial_family(poynting_vec, poly_order)
 
     kwargs = {'data': [poynting_vec, ], 'variable_names': variable_names,
-              'max_deriv_order': max_deriv_order, 'derivs': [derivs, ],
+              'max_deriv_order': max_deriv_order, 'derivs': derivs,
               'equation_terms_max_number': equation_terms_max_number, 'data_fun_pow': data_fun_pow,
               'additional_tokens': [polynomial_tokens, custom_grid_tokens if derivs is None else polynomial_tokens],
               'equation_factors_max_number': factors_max_number, 'eq_sparsity_interval': (1e-12, 1e-4)}
