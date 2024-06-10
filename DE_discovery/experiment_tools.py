@@ -7,14 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import (mean_squared_error, mean_absolute_percentage_error)
 from matplotlib.axes import Axes
 
-from discovery_utils import epde_discovery
-from solver_utils import get_solution
-from data_utils import get_data
-from results_analysis import get_results_dir
+from discovery_tools import epde_discovery
+from solver_tools import get_solution
+from data_tools import get_data
+from results_analysis_tools import get_results_dir
 
 mpl.rcParams.update(mpl.rcParamsDefault)
 
-solver_img_dir = str(Path(__file__) / 'optics_intermediate')  # directory for solver charts
+solver_img_dir = str(Path.cwd() / 'optics_intermediate')  # directory for solver charts
 
 
 def get_split_data(r0: int | float, test_size: float = 0.2,
@@ -131,7 +131,7 @@ def set_plot(r0: int | float, wave_length: int | float, img_filename: Path, save
 def draw_solution(r0: int | float, wave_length: int | float, i: int, run: int, m_grid_training: np.ndarray,
                   m_grid_test: np.ndarray, poynting_vec_training: np.ndarray, poynting_vec_test: np.ndarray,
                   pred_solution_training: torch.Tensor, pred_solution_test: torch.Tensor, results_dir: Path,
-                  save_solutions: bool = True, add_legend: bool = False) -> None:
+                  save_solutions: bool = True, add_legend: bool = False, add_training_data: bool = False) -> None:
     fig = plt.figure(dpi=200)
     ax = fig.add_subplot()
 
@@ -140,9 +140,8 @@ def draw_solution(r0: int | float, wave_length: int | float, i: int, run: int, m
                     pred_solution_training)
 
     rmse = np.sqrt(mean_squared_error(poynting_vec_test, pred_solution_test.detach().numpy()))
-    mape = mean_absolute_percentage_error(poynting_vec_test, pred_solution_test.detach().numpy())
     set_main_ax(ax, axins, m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test,
-                pred_solution_training, rmse, mape)
+                pred_solution_training, rmse, add_training_data)
     sln_img_dir = results_dir / 'solutions visualization'
     if not (Path(sln_img_dir).exists()):
         Path(sln_img_dir).mkdir()
@@ -160,8 +159,8 @@ def save_solution_data(r0: int | float, i: int, run: int, pred_solution: torch.T
     np.savetxt(sln_data_filename, pred_solution.detach().numpy())
 
 
-def save_txt_for_equations(r0: int | float, i: int, run: int,
-                           results_dir: Path, text_eq: str) -> None:
+def save_txt_form_equations(r0: int | float, i: int, run: int,
+                            results_dir: Path, text_eq: str) -> None:
     txt_dir = results_dir / 'text equations'
     if not (txt_dir.exists()):
         txt_dir.mkdir()
@@ -254,49 +253,5 @@ def start_run(r0: int | float, wave_length: int | float, run: int, grid_training
         if solve_equations:
             start_solver(eq, grid_training, grid_test, poynting_vec_training, poynting_vec_test,
                          training_tedeous_epochs, results_dir, r0, wave_length, i, run)
-        save_txt_for_equations(r0=r0, i=i, run=run, results_dir=results_dir, text_eq=eqs_text_form[i])
+        save_txt_form_equations(r0=r0, i=i, run=run, results_dir=results_dir, text_eq=eqs_text_form[i])
 
-
-def start_exp(r0: int | float, wave_length: int | float, exp_name: str = 'optics', nruns: int = 1,
-              solve_equations: bool = True, pop_size: int = 5,
-              factors_max_number: int = 1, poly_order: int = 4, variable_names=None,
-              max_deriv_order: int | tuple = (2,), equation_terms_max_number: int = 5,
-              data_fun_pow: int = 1, training_epde_epochs: int = 100, training_tedeous_epochs: int = 10000) -> None:
-    """
-    Runs an optics experiment with the specified parameters.
-
-    Args:
-        r0 (int | float): The radius of the dielectric inclusions in 2D supercell model of the inhomogeneous layer
-        value in micrometers.
-        wave_length: The wavelength of the incident wave.
-        exp_name (str): The name of the experiment (default is 'optics').
-        nruns (int): The number of runs of the epde_discovery (default is 1).
-        solve_equations (bool): Flag to solve equations (default is True).
-        pop_size: The population size for EPDE.
-        factors_max_number (int): Maximum number of factors in a term (default is 1).
-        poly_order (int): Order of family of tokens for polynomials (default is 4).
-        variable_names (list[str]): List of variable names (default is ['I']).
-        max_deriv_order (int | tuple): Maximum derivative order (default is (2,)).
-        equation_terms_max_number (int): Maximum number of equation terms (default is 5).
-        data_fun_pow (int): The highest power of derivative-like token in the equation (default is 1).
-        training_epde_epochs (int): Number of training epochs for EPDE (default is 100).
-        training_tedeous_epochs (int): Number of training epochs for TEDEouS (default is 10000).
-
-    Returns:
-        None
-    """
-
-    if variable_names is None:
-        variable_names = ['I']
-
-    m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test = get_split_data(r0)
-    results_dir = get_results_dir(exp_name)
-    save_split_exp_data(r0, m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test, results_dir)
-
-    for run in range(nruns):
-        start_run(r0, wave_length, run, m_grid_training / wave_length,
-                  m_grid_test / wave_length, poynting_vec_training,
-                  poynting_vec_test, pop_size, factors_max_number,
-                  poly_order, training_epde_epochs, variable_names,
-                  max_deriv_order, equation_terms_max_number, data_fun_pow,
-                  solve_equations, training_tedeous_epochs, results_dir)

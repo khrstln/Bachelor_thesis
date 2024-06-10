@@ -105,6 +105,6 @@ def get_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
     cb_plots = plot.Plots(save_every=1000, print_every=None, img_dir=img_dir)
     optimizer = Optimizer('Adam', {'lr': 1e-3})
     model.train(optimizer, training_epochs, save_model=False, callbacks=[cb_es, cb_plots])
-    predicted_solution_train = check_device(net(grid_train)).reshape(-1)
+    predicted_solution_training = check_device(net(grid_train)).reshape(-1)
     predicted_solution_test = check_device(net(grid_test)).reshape(-1)
-    return predicted_solution_train, predicted_solution_test
+    return predicted_solution_training, predicted_solution_test
