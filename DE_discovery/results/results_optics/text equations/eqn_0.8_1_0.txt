@@ -1,0 +1,2 @@
+-173.64106431293945 * I^3{power: 1.0} + -21.54754344894452 * I{power: 1.0} + -178.8903504374557 * I^4{power: 1.0} + -3.234669069840379e-05 * d^2I/dx0^2{power: 1.0} + -0.03798249797506486 = dI/dx0{power: 1.0}
+{'terms_number': {'optimizable': False, 'value': 5}, 'max_factors_in_term': {'optimizable': False, 'value': 1}, ('sparsity', 'I'): {'optimizable': True, 'value': 0.0004933701404806392}}

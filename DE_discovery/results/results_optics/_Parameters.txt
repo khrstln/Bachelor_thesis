@@ -1,0 +1,12 @@
+exp_name: optics
+wave_length: 0.5
+nruns: 1
+pop_size: 6
+factors_max_numbers: 1
+max_deriv_order: (2,)
+poly_order: 4
+equation_terms_max_number: 5
+data_fun_pow: 1
+training_epde_epochs: 100
+training_tedeous_epochs: 10000
+use_smoothing: True

@@ -1,4 +1,4 @@
-# Bachelor_thesis
+# DE_discovery
 
 ## Описание 
 
@@ -51,9 +51,9 @@
 
 Уравнение, восстановленное по данным, для значения радиуса $r_0 = 0,1 \text{ мкм}$
 
-$$-4,033 \cdot I - 3,063 \cdot I^4 - 0,001  = \frac{dI}{dy}$$
+$$\frac{dI}{dH} = - 0.025 - 39.643 \cdot I$$
 
 Уравнение имеет граничное условие $I_{0, y}(0) = -1$. График численного решения и тестовые данные, а также ошибка на тестовой выборке приведены на рисунке ниже
 
-![Solution](https://github.com/khrstln/Bachelor_thesis/blob/development/images/sln_0.1_0_0.png)
+![Solution](https://github.com/khrstln/Bachelor_thesis/blob/development/images/sln_0.1_2_0.png)
 

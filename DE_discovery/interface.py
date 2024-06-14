@@ -80,7 +80,7 @@ def save_total_results_csv(r0_list: [int | float], exp_name: str, pop_size: int,
     """
 
     results_df = get_results_df(r0_list, exp_name, pop_size, nruns)
-    results_df = results_df[['C', 'I', 'I^2', 'I^3', 'I^4', 'd^2I/dH^2', 'dI/dH', 'rmse']]
+    results_df = results_df[['C', 'H', 'I', 'I^2', 'I^3', 'I^4', 'd^2I/dH^2', 'dI/dH', 'rmse']]
     results_dir_name = get_results_dir(exp_name)
     results_df.to_csv(results_dir_name / fr'total_results_{exp_name}.csv')
 
@@ -100,6 +100,7 @@ def save_total_results_latex_form(r0_list: [int | float], exp_name: str, pop_siz
     """
 
     results_df = get_results_df(r0_list, exp_name, pop_size, nruns)
+    results_df = results_df[['C', 'H', 'I', 'I^2', 'I^3', 'I^4', 'd^2I/dH^2', 'dI/dH', 'rmse']]
 
     results_dir_name = get_results_dir(exp_name)
 
