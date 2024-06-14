@@ -5,19 +5,19 @@
 *\.idea
 
 *\__pycache__
-/DE_discovery/results/results_optics_05.06.24/
-/DE_discovery/results/old results/
+/Data-driven experiment/results/results_optics_05.06.24/
+/Data-driven experiment/results/old results/
 /Data collecting/different r0/
 /Data collecting/different n0/
 /Data collecting/different eps_cyl/
-/DE_discovery/results/results_optics_09.06.24_1/
-/DE_discovery/results/results_optics_10.06.24_1/
+/Data-driven experiment/results/results_optics_09.06.24_1/
+/Data-driven experiment/results/results_optics_10.06.24_1/
 /Data collecting/different r0 2/
-/DE_discovery/results/results_test_13.06.24_1/
-/DE_discovery/results/results_test_13.06.24_2/
-/DE_discovery/results/results_test_13.06.24_3/
-/DE_discovery/results/results_test_13.06.24_4/
-/DE_discovery/results/results_test_13.06.24_5/
-/DE_discovery/results/results_optics_13.06.24_1/
+/Data-driven experiment/results/results_test_13.06.24_1/
+/Data-driven experiment/results/results_test_13.06.24_2/
+/Data-driven experiment/results/results_test_13.06.24_3/
+/Data-driven experiment/results/results_test_13.06.24_4/
+/Data-driven experiment/results/results_test_13.06.24_5/
+/Data-driven experiment/results/results_optics_13.06.24_1/
 /Data collecting/script_T_from_H_zero_harmonic.asv
-/DE_discovery/tmp.py
+/Data-driven experiment/tmp.py
