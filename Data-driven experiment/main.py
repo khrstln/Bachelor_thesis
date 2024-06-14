@@ -5,7 +5,6 @@ if __name__ == '__main__':
     solver_device('cpu')
     wave_length = 0.5  # The wavelength value in micrometers
     r0_list = [r / 10 for r in range(1, 10)]  # Radius values of the dielectric inclusions in 2D supercell
-    # model of the inhomogeneous layer value in micrometers
     exp_name = 'optics'  # The name of the experiment
     pop_size = 6
     nruns = 1
