@@ -1,3 +1,5 @@
+import numpy as np
+
 from experiment_tools import *
 from results_analysis_tools import *
 import pandas as pd
@@ -78,6 +80,7 @@ def save_total_results_csv(r0_list: [int | float], exp_name: str, pop_size: int,
     """
 
     results_df = get_results_df(r0_list, exp_name, pop_size, nruns)
+    results_df = results_df[['C', 'I', 'I^2', 'I^3', 'I^4', 'd^2I/dH^2', 'dI/dH', 'rmse']]
     results_dir_name = get_results_dir(exp_name)
     results_df.to_csv(results_dir_name / fr'total_results_{exp_name}.csv')
 
@@ -112,7 +115,8 @@ def start_exp(r0: int | float, wave_length: int | float, exp_name: str = 'optics
               solve_equations: bool = True, pop_size: int = 5,
               factors_max_number: int = 1, poly_order: int = 4, variable_names=None,
               max_deriv_order: int | tuple = (2,), equation_terms_max_number: int = 5,
-              data_fun_pow: int = 1, training_epde_epochs: int = 100, training_tedeous_epochs: int = 10000) -> None:
+              data_fun_pow: int = 1, training_epde_epochs: int = 100,
+              training_tedeous_epochs: int = 10000, use_smoothing: bool = False) -> None:
     """
     Runs an optics experiment with the specified parameters.
 
@@ -132,25 +136,32 @@ def start_exp(r0: int | float, wave_length: int | float, exp_name: str = 'optics
         data_fun_pow (int): The highest power of derivative-like token in the equation (default is 1).
         training_epde_epochs (int): Number of training epochs for EPDE (default is 100).
         training_tedeous_epochs (int): Number of training epochs for TEDEouS (default is 10000).
+        use_smoothing: The flag whether to use Gaussian smoothing (default is False).
 
     Returns:
         None
     """
 
+    save_exp_params(exp_name, wave_length, nruns, pop_size,
+                    factors_max_number, poly_order, max_deriv_order,
+                    equation_terms_max_number, data_fun_pow, training_epde_epochs,
+                    training_tedeous_epochs, use_smoothing)
+
     if variable_names is None:
         variable_names = ['I']
 
-    m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test = get_split_data(r0)
+    grid_training, grid_test, poynting_vec_training, poynting_vec_test = get_split_data(r0)
     results_dir = get_results_dir(exp_name)
-    save_split_exp_data(r0, m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test, results_dir)
+    save_split_exp_data(r0, grid_training, grid_test, poynting_vec_training, poynting_vec_test, results_dir)
 
     for run in range(nruns):
-        start_run(r0, wave_length, run, m_grid_training / wave_length,
-                  m_grid_test / wave_length, poynting_vec_training,
+        start_run(r0, wave_length, run, grid_training / wave_length,
+                  grid_test / wave_length, poynting_vec_training,
                   poynting_vec_test, pop_size, factors_max_number,
                   poly_order, training_epde_epochs, variable_names,
                   max_deriv_order, equation_terms_max_number, data_fun_pow,
-                  solve_equations, training_tedeous_epochs, results_dir)
+                  use_smoothing, solve_equations,
+                  training_tedeous_epochs, results_dir)
 
 
 def save_solutions_visualization(r0_list: list, exp_name: str, wave_length: float, pop_size: int,
@@ -191,6 +202,8 @@ def save_solutions_visualization(r0_list: list, exp_name: str, wave_length: floa
                                                                 f'sln_data_training_{r0}_{i}_{run}.txt'))
         pred_solution_test = torch.from_numpy(np.genfromtxt(results_dir / 'solutions data' /
                                                             f'sln_data_test_{r0}_{i}_{run}.txt'))
-        draw_solution(r0, wave_length, i, run, grid_training, grid_test, poynting_vec_training, poynting_vec_test,
+        grid_max = np.max(np.concatenate((grid_training, grid_test)))
+        draw_solution(r0, wave_length, i, run, grid_training / grid_max, grid_test / grid_max,
+                      poynting_vec_training, poynting_vec_test,
                       pred_solution_training, pred_solution_test, results_dir, save_solutions=True,
                       add_legend=add_legend, add_training_data=add_training_data)

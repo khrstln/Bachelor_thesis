@@ -16,16 +16,16 @@ dl = 15; % period of the structure in micrometers 2
 dh = 50; % layer thickness in micrometers 
 epss = 4; % dielectric permittivity of cylinders 
 epsm = 1; %  dielectric permittivity of background media
-r0_fix = 0.8; % radius of cylinders
-n0 = 0.5; %packing density of cylinders
+r0_fix = 0.3; % radius of cylinders
+n0 = 0.3; %packing density of cylinders
 
 
 
-n_var = 250; % ensemble size for averaging
+n_var = 100; % ensemble size for averaging
 
 
 
-dn_sl = 41; %number of slices per 1 cylinder
+dn_sl = 41 * ceil(r0_fix / 0.1); %number of slices per 1 cylinder
 n_cyl = floor(dh*dl/pi./r0_fix^2*n0); % number of cylinders in the unit cell
 n_cyl_tot = n_cyl; %total number of cylinders; for const radius n_cyl_tot = n_cyl
 n_sl = dn_sl*ceil(dh/(2*max(r0_fix))); % total number of slices per unit cell
@@ -36,12 +36,12 @@ min_dist = dl/1000; % min distance
 no=150;
 %% Target values
 grid = 1:10:n_sl; %grid of slices for measurements
-writematrix(grid*dy, strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\grid.txt"))
+writematrix(grid*dy, strcat("C:\Users\Mi\Documents\GitHub\Bachelor_thesis\Data collecting\different r0 2\T(H) r0=", num2str(r0_fix), "\grid_", num2str(r0_fix), ".txt"))
 
 T_sum = zeros(numel(grid), n_var); %array of total transmitted energy
 
 %% ensamble averaging
-for i_var = 1:n_var
+for i_var = 99:n_var
     disp([num2str(i_var), ' iter of ', num2str(n_var)])
 %% Generation of spheres
     x0 = ones(1, 2*n_cyl_tot)*2*max(dh, dl); 
@@ -365,14 +365,14 @@ for i_var = 1:n_var
             end
         end
        
-writematrix(T_sum(:,i_var), strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\T_", num2str(i_var), ".txt"))       
+writematrix(T_sum(:,i_var), strcat("C:\Users\Mi\Documents\GitHub\Bachelor_thesis\Data collecting\different r0 2\T(H) r0=", num2str(r0_fix), "\T_", num2str(i_var), ".txt"))       
         
    
 end
 %% plotting obtained dependecy
 
 T_av = mean(T_sum, 2);
-writematrix(T_av, strcat("C:\Users\iliya.hrustalev\Matlab code\different n0\T(H) n0=", num2str(n0), "\r0=", num2str(r0_fix), "\T_av.txt"))
+% writematrix(T_av, strcat("C:\Users\Mi\Documents\GitHub\Bachelor_thesis\Data collecting\different r0 2\T(H) r0=", num2str(r0_fix), "\T_av.txt"))
 % set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
 % set(groot, 'defaultLegendInterpreter','latex');
 % figure()

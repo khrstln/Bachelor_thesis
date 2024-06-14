@@ -53,35 +53,30 @@ def save_split_exp_data(r0: int | float, m_grid_training: np.ndarray,
 def get_eqs_solver_text_form(grid_training: np.ndarray, poynting_vec_training: np.ndarray, pop_size: int,
                              factors_max_number: int, poly_order: int, training_epde_epochs: int,
                              variable_names: [str], max_deriv_order: (int,),
-                             equation_terms_max_number: int, data_fun_pow: int) -> (list, list):
+                             equation_terms_max_number: int, data_fun_pow: int, use_smoothing: bool) -> (list, list):
     epde_search_obj = epde_discovery(grid_training, poynting_vec_training, pop_size=pop_size,
                                      factors_max_number=factors_max_number, poly_order=poly_order,
                                      training_epochs=training_epde_epochs, variable_names=variable_names,
                                      max_deriv_order=max_deriv_order,
                                      equation_terms_max_number=equation_terms_max_number,
-                                     data_fun_pow=data_fun_pow)
+                                     data_fun_pow=data_fun_pow, use_smoothing=use_smoothing)
     return epde_search_obj.solver_forms()[0], epde_search_obj.equations(only_print=False, only_str=True, num=1)[0]
 
 
-def get_inserted_ax(ax: Axes, r0: int | float) -> Axes:
-    x1, x2, y1, y2 = 0.01, 3, -1.05, 0.05
-    if r0 < 0.3:
-        axins = ax.inset_axes((20.0, -0.6, 35.0, 0.4),
-                              xlim=(x1, x2), ylim=(y1, y2), transform=ax.transData, xticklabels=[],
-                              yticklabels=[])
-        axins.set_xticks(np.arange(0, 3.01, 1))
-    elif r0 < 0.5:
-        x2 = 7
-        axins = ax.inset_axes((20.0, -0.6, 35.0, 0.4),
-                              xlim=(x1, x2), ylim=(y1, y2), transform=ax.transData, xticklabels=[],
-                              yticklabels=[])
-        axins.set_xticks(np.arange(0, 7.01, 1))
+def get_inserted_ax(ax: Axes, r0: int | float, grid_max: int | float) -> Axes:
+    x1, x2, y1, y2 = 0.0001 * grid_max, 0.03 * grid_max, -1.05, 0.05
+    x_right_border = 0.0301 * grid_max
+    if 0.3 < r0 <= 0.5:
+        x2 = 0.07 * grid_max
+        x_right_border = 0.0701 * grid_max
     else:
-        x2 = 15
-        axins = ax.inset_axes((20.0, -0.6, 35.0, 0.4),
-                              xlim=(x1, x2), ylim=(y1, y2), transform=ax.transData, xticklabels=[],
-                              yticklabels=[])
-        axins.set_xticks(np.arange(0, 15.01, 2))
+        x2 = 0.15 * grid_max
+        x_right_border = 0.1501 * grid_max
+
+    axins = ax.inset_axes((0.2 * grid_max, -0.6, 0.35 * grid_max, 0.4),
+                          xlim=(x1, x2), ylim=(y1, y2), transform=ax.transData, xticklabels=[],
+                          yticklabels=[])
+    axins.set_xticks(np.arange(0, x_right_border, 0.01 * np.ceil(grid_max)))
     return axins
 
 
@@ -100,15 +95,16 @@ def set_inserted_ax(axins: Axes, grid_training: np.ndarray, grid_test: np.ndarra
 def set_main_ax(ax: Axes, axins: Axes, grid_training: np.ndarray, grid_test: np.ndarray,
                 poynting_vec_training: np.ndarray, poynting_vec_test: np.ndarray, pred_solution_training: torch.Tensor,
                 rmse: float, add_training_data: bool = False) -> None:
+    grid_max = np.max(np.concatenate((grid_training, grid_test)))
     ax.indicate_inset_zoom(axins, edgecolor="black")
-    ax.set_xticks(np.arange(0, np.max(grid_test) + 10, 10))
+    ax.set_xticks(np.arange(0, 1.1 * grid_max, 0.1 * np.ceil(grid_max)))
     ax.set_yticks(np.arange(-1., 0.5, 0.2))
     if add_training_data:
         ax.plot(grid_training, poynting_vec_training, '+', label='Training data')
     ax.plot(grid_test, poynting_vec_test, '.', color='black', label='Test data')
     ax.plot(grid_training, pred_solution_training.detach().numpy(), color='r',
             label='Solution of the discovered DE')
-    ax.text(70, -0.8,
+    ax.text(0.7 * grid_max, -0.8,
             f'RMSE = {rmse:.2e}', fontsize=10)
 
     ax.grid(True)
@@ -119,7 +115,7 @@ def set_plot(r0: int | float, wave_length: int | float, img_filename: Path, save
     if add_legend:
         plt.legend(loc=4)
     plt.title(fr"$I_y(H), r_0 = {r0}\mu m$, $\lambda = {wave_length} \mu m$")
-    plt.xlabel(r'$H / \lambda$')
+    plt.xlabel(r'$\frac{H}{\lambda} \cdot 10^{-2}$')
     plt.ylabel(r'$I_y(H)$')
     if save_solutions:
         plt.savefig(img_filename)
@@ -128,19 +124,20 @@ def set_plot(r0: int | float, wave_length: int | float, img_filename: Path, save
         plt.plot()
 
 
-def draw_solution(r0: int | float, wave_length: int | float, i: int, run: int, m_grid_training: np.ndarray,
-                  m_grid_test: np.ndarray, poynting_vec_training: np.ndarray, poynting_vec_test: np.ndarray,
+def draw_solution(r0: int | float, wave_length: int | float, i: int, run: int, grid_training: np.ndarray,
+                  grid_test: np.ndarray, poynting_vec_training: np.ndarray, poynting_vec_test: np.ndarray,
                   pred_solution_training: torch.Tensor, pred_solution_test: torch.Tensor, results_dir: Path,
                   save_solutions: bool = True, add_legend: bool = False, add_training_data: bool = False) -> None:
     fig = plt.figure(dpi=200)
     ax = fig.add_subplot()
 
-    axins = get_inserted_ax(ax, r0)
-    set_inserted_ax(axins, m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test,
+    grid_max = np.max(np.concatenate((grid_training, grid_test)))
+    axins = get_inserted_ax(ax, r0, grid_max)
+    set_inserted_ax(axins, grid_training, grid_test, poynting_vec_training, poynting_vec_test,
                     pred_solution_training)
 
     rmse = np.sqrt(mean_squared_error(poynting_vec_test, pred_solution_test.detach().numpy()))
-    set_main_ax(ax, axins, m_grid_training, m_grid_test, poynting_vec_training, poynting_vec_test,
+    set_main_ax(ax, axins, grid_training, grid_test, poynting_vec_training, poynting_vec_test,
                 pred_solution_training, rmse, add_training_data)
     sln_img_dir = results_dir / 'solutions visualization'
     if not (Path(sln_img_dir).exists()):
@@ -199,8 +196,8 @@ def start_solver(equation: [list], grid_training: np.ndarray, grid_test: np.ndar
                                                               grid_training,
                                                               grid_test, solver_img_dir,
                                                               training_epochs=training_tedeous_epochs)
-    draw_solution(r0, wave_length, i, run, grid_training, grid_test, poynting_vec_training, poynting_vec_test,
-                  pred_solution_training, pred_solution_test, results_dir, save_solutions=True,
+    draw_solution(r0, wave_length, i, run, grid_training, grid_test, poynting_vec_training,
+                  poynting_vec_test, pred_solution_training, pred_solution_test, results_dir, save_solutions=True,
                   add_legend=False)
     save_solution_data(r0, i, run, pred_solution_training, results_dir)
     save_solution_data(r0, i, run, pred_solution_test, results_dir, training=False)
@@ -211,7 +208,8 @@ def start_run(r0: int | float, wave_length: int | float, run: int, grid_training
               poynting_vec_test: np.ndarray, pop_size: int, factors_max_number: int,
               poly_order: int, training_epde_epochs: int, variable_names: [str],
               max_deriv_order: (int,), equation_terms_max_number: int, data_fun_pow: int,
-              solve_equations: bool, training_tedeous_epochs: int, results_dir: Path) -> None:
+              use_smoothing: bool, solve_equations: bool,
+              training_tedeous_epochs: int, results_dir: Path) -> None:
     """
     Starts a run for solving equations from one population and saving results based on the provided parameters.
 
@@ -232,6 +230,7 @@ def start_run(r0: int | float, wave_length: int | float, run: int, grid_training
         max_deriv_order: Maximum derivative order in a differential equation.
         equation_terms_max_number: Maximum number of equation terms.
         data_fun_pow: The highest power of derivative-like token in the equation.
+        use_smoothing: The flag whether to use Gaussian smoothing.
         solve_equations: Boolean indicating whether to solve equations.
         training_tedeous_epochs: Number of training TEDEouS epochs.
         results_dir: Directory to save results.
@@ -240,7 +239,8 @@ def start_run(r0: int | float, wave_length: int | float, run: int, grid_training
         None
     """
 
-    eqs_solver_form, eqs_text_form = get_eqs_solver_text_form(grid_training=grid_training,
+    grid_max = np.max(np.concatenate((grid_training, grid_test)))
+    eqs_solver_form, eqs_text_form = get_eqs_solver_text_form(grid_training=grid_training / grid_max,
                                                               poynting_vec_training=poynting_vec_training,
                                                               pop_size=pop_size, factors_max_number=factors_max_number,
                                                               poly_order=poly_order,
@@ -248,10 +248,26 @@ def start_run(r0: int | float, wave_length: int | float, run: int, grid_training
                                                               variable_names=variable_names,
                                                               max_deriv_order=max_deriv_order,
                                                               equation_terms_max_number=equation_terms_max_number,
-                                                              data_fun_pow=data_fun_pow)
+                                                              data_fun_pow=data_fun_pow, use_smoothing=use_smoothing)
     for i, eq in enumerate(eqs_solver_form):
         if solve_equations:
-            start_solver(eq, grid_training, grid_test, poynting_vec_training, poynting_vec_test,
+            start_solver(eq, grid_training / grid_max, grid_test / grid_max, poynting_vec_training, poynting_vec_test,
                          training_tedeous_epochs, results_dir, r0, wave_length, i, run)
         save_txt_form_equations(r0=r0, i=i, run=run, results_dir=results_dir, text_eq=eqs_text_form[i])
+
+
+def save_exp_params(exp_name: str, wave_length: int | float, nruns: int, pop_size: int,
+                    factors_max_number: int, poly_order: int, max_deriv_order: int | tuple,
+                    equation_terms_max_number: int, data_fun_pow: int, training_epde_epochs: int,
+                    training_tedeous_epochs: int, use_smoothing: bool) -> None:
+    params = {'exp_name': exp_name, 'wave_length': wave_length, 'nruns': nruns, 'pop_size': pop_size,
+              'factors_max_numbers': factors_max_number, 'max_deriv_order': max_deriv_order, 'poly_order': poly_order,
+              'equation_terms_max_number': equation_terms_max_number, 'data_fun_pow': data_fun_pow,
+              'training_epde_epochs': training_epde_epochs, 'training_tedeous_epochs': training_tedeous_epochs,
+              'use_smoothing': use_smoothing}
+    parameters_file_name = get_results_dir(exp_name) / '_Parameters.txt'
+    with parameters_file_name.open(mode='w') as file:
+        for key, value in params.items():
+            file.write(f'{key}: {value}\n')
+
 

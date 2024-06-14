@@ -61,8 +61,8 @@ def get_nn() -> torch.nn.Sequential:
     )
 
 
-def get_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
-                 m_grid_test: np.ndarray, img_dir: str, training_epochs: int = 10000,
+def get_solution(eq, poynting_vec: np.ndarray, grid_training: np.ndarray,
+                 grid_test: np.ndarray, img_dir: str, training_epochs: int = 10000,
                  mode: str = 'autograd') -> (torch.Tensor, torch.Tensor):
     """
     Solve the given equation using the specified solver mode and return the predicted solutions for training and
@@ -71,8 +71,8 @@ def get_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
     Args:
         eq: The equation to solve.
         poynting_vec: The Poynting vector data.
-        m_grid_train: The training grid data.
-        m_grid_test: The testing grid data.
+        grid_training: The training grid data.
+        grid_test: The testing grid data.
         img_dir: The directory to save solution images.
         training_epochs: Number of epochs for training (default is 10000).
         mode: The solver mode to use (default is 'autograd').
@@ -81,13 +81,13 @@ def get_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
         tuple: Predicted solutions for the training and testing grids.
     """
 
-    grid_train = get_grid_for_solver(m_grid_train)
-    grid_test = get_grid_for_solver(m_grid_test)
+    grid_training = get_grid_for_solver(grid_training)
+    grid_test = get_grid_for_solver(grid_test)
 
     domain = Domain()  # Domain class for domain initialization
-    domain.variable('y', grid_train, None)
+    domain.variable('y', grid_training, None)
 
-    boundaries = set_boundary([0], [-1])
+    boundaries = set_boundary([0.0], [-1])
 
     equation = Equation()
     equation.add(eq)
@@ -105,6 +105,6 @@ def get_solution(eq, poynting_vec: np.ndarray, m_grid_train: np.ndarray,
     cb_plots = plot.Plots(save_every=1000, print_every=None, img_dir=img_dir)
     optimizer = Optimizer('Adam', {'lr': 1e-3})
     model.train(optimizer, training_epochs, save_model=False, callbacks=[cb_es, cb_plots])
-    predicted_solution_training = check_device(net(grid_train)).reshape(-1)
+    predicted_solution_training = check_device(net(grid_training)).reshape(-1)
     predicted_solution_test = check_device(net(grid_test)).reshape(-1)
     return predicted_solution_training, predicted_solution_test
